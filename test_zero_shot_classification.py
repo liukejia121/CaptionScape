@@ -90,7 +90,7 @@ class CsvDatasetForClassificationBinary(Dataset):
             return images, self.actual_labels[idx]
         
         
-def test_zero_shot_classification(model, dataloader, label_list, is_binary, args, dataset_name='unnamed', debugging=False):
+def test_zero_shot_classification(model, dataloader, label_list, is_binary, args, dataset_name='unnamed', predcsv='pred.csv', debugging=False):
 #     logging.info('Starting zero-shot classification test.')
     templates = template_dict[dataset_name]
     model.eval()
@@ -99,23 +99,31 @@ def test_zero_shot_classification(model, dataloader, label_list, is_binary, args
     if is_binary:
         results = run_binary(model, classifier, dataloader, args, dataset_name=dataset_name, debugging=debugging)
     else:
-        results = run(model, classifier, dataloader, args, dataset_name=dataset_name, debugging=debugging)
+        results = run(model, classifier, dataloader, args, dataset_name=dataset_name, predcsv=predcsv, debugging=debugging)
     return results
 
 
+# def accuracy(output, target, topk=(1,)):
+#     pred = output.topk(max(topk), 1, True, True)[1].t()
+#     correct = pred.eq(target.view(1, -1).expand_as(pred))
+#     return [float(correct[:k].reshape(-1).float().sum(0, keepdim=True).cpu().numpy()) for k in topk]
+
 def accuracy(output, target, topk=(1,)):
     pred = output.topk(max(topk), 1, True, True)[1].t()
+    pred_top1 = output.topk(1, 1, True, True)[1].t()
     correct = pred.eq(target.view(1, -1).expand_as(pred))
-    return [float(correct[:k].reshape(-1).float().sum(0, keepdim=True).cpu().numpy()) for k in topk]
+    lst_topk_result = [float(correct[:k].reshape(-1).float().sum(0, keepdim=True).cpu().numpy()) for k in topk]
+    return lst_topk_result, pred_top1
+            
 
-
-def run(model, classifier, dataloader, args, dataset_name='unnamed', debugging=False):
+def run(model, classifier, dataloader, args, dataset_name='unnamed', predcsv='pred.csv', debugging=False):
     autocast = get_autocast(args.precision)
     cast_dtype = get_cast_dtype(args.precision)
     predictions = []
     labels = []
     all_img_paths = []
     with torch.no_grad():
+        list_pred = []
         top1, top5, n = 0., 0., 0.
         for tup in tqdm(dataloader, unit_scale=args.batch_size):
             if len(tup) == 2:
@@ -140,7 +148,10 @@ def run(model, classifier, dataloader, args, dataset_name='unnamed', debugging=F
                 logits = 100. * image_features @ classifier
 
             # measure accuracy
-            acc1, acc5 = accuracy(logits, target, topk=(1, 5))
+            # acc1, acc5 = accuracy(logits, target, topk=(1, 5))
+            lst_topk_result, pred_ = accuracy(logits, target, topk=(1, 5))  
+            list_pred.append(pred_)
+            acc1, acc5 = lst_topk_result
             top1 += acc1
             top5 += acc5
             n += images.size(0)
@@ -153,6 +164,18 @@ def run(model, classifier, dataloader, args, dataset_name='unnamed', debugging=F
                 labels.extend(label)
                 if image_paths is not None:
                     all_img_paths.extend(image_paths)
+
+        if len(list_pred) == 1:  # n_tile < batchsize
+            tensor_pred = list_pred[0]
+        else:
+            # Combined by columns:e.g. 5*128，concat to 5*256， so dim=1
+            tensor_pred = torch.cat(list_pred, dim=1)
+        
+        # Save prediction to csv file.
+        tensor_np = tensor_pred.cpu().numpy().T
+        # NumPy to Pandas DataFrame
+        df = pd.DataFrame(tensor_np)
+        df.to_csv(predcsv, index=False)
 
     top1 = (top1 / n)
     top5 = (top5 / n)
@@ -312,6 +335,7 @@ def get_test_dataloaders(args, preprocess_fn):
 
 def test(args):
     args = parse_args(args)
+    predcsv = args.pred_csv_path
     
     if torch.cuda.is_available():
         # This enables tf32 on Ampere GPUs which is only 8% slower than
@@ -372,7 +396,7 @@ def test(args):
         results = test_zero_shot_classification(model, test_dataloaders[dataset_name]['dataloader'], 
                                                 test_dataloaders[dataset_name]['labels'], 
                                                 test_dataloaders[dataset_name]['is_binary'], args, 
-                                                dataset_name=dataset_name, debugging=args.debugging)
+                                                dataset_name=dataset_name, predcsv=predcsv, debugging=args.debugging)
         for k in results:
             results_all[k] = results[k]
     

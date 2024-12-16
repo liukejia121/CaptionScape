@@ -510,7 +510,12 @@ def parse_args(args):
         default=False,
         help="Whether to use debugging mode, which will return more information."
     )
-    
+    parser.add_argument(
+        "--pred-csv-path",
+        type=str,
+        default=None,
+        help="The saving path of csv file, to save predictions of tiles.",
+    )  
     args = parser.parse_args(args)
 
     # If some params are not passed, we use the default values based on model name.
@@ -518,5 +523,72 @@ def parse_args(args):
     for name, val in default_params.items():
         if getattr(args, name) is None:
             setattr(args, name, val)
+
+    return args
+
+
+
+"""parameters of capmap"""
+def parse_args_cap(args):
+    """
+    Parse parameters for caption scape class.
+    """ 
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "--rootpath",
+        type=str,
+        default=None,
+        help="Root directory to datasets",
+    )
+    parser.add_argument(
+        "--imagesrc",
+        type=str,
+        default=None,
+        help="The name of file that provide src bigmaps.",
+    )
+    parser.add_argument(
+        "--savepath",
+        type=str,
+        default=None,
+        help="The path of saving result.",
+    )
+    parser.add_argument(
+        "--imset",
+        type=str,
+        default=None,
+        help="The name of dataset obtained from imagesrc.",
+    )
+    parser.add_argument(
+        "--x",
+        type=str,
+        default=None,
+        help="The index of source image.",
+    )
+    parser.add_argument(
+        "--s",
+        type=int,
+        default=None,
+        help="The lontitude of tile, after multiply 10000.",
+    )
+    parser.add_argument(
+        "--c",
+        type=int,
+        default=None,
+        help="The lontitude of (crop + tile), after multiply 10000.",
+    )
+    parser.add_argument(
+        "--label-language",
+        type=str,
+        default='english',
+        help="The flag of language option to show on the caption scape image at last.",
+    )
+    parser.add_argument(
+        "--pretrained-model",
+        type=str,
+        default=None,
+        help="The path of download pretrained model.",
+    )
+    
+    args = parser.parse_args(args)
 
     return args
