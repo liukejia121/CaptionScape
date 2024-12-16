@@ -17,7 +17,7 @@ For detailed content, please refer to the paper https://arxiv.org/abs/2312.12856
 - Motivation：
 The project "SkyScript" only provides a program for calculating accuracy of classification or fine-grained classification, but does not offer visualization examples, making it difficult to intuitively see the application effects of the algorithm on remote sensing maps. To address this, an additional program has been developed to allow users to quickly visualize the effects of the algorithm.
 
-- program development approach:
+- Program development approach:
 Crop remote sensing image into tiles, then predict caption of each tile and plot all the captions on the remote sensing image, call it caption scape.
 In caption scape image, the captions will overlapping on the image in form of semitransparent rectangle, so that we can see the predicted caption of the tile and it's corresponding ixels at the same time. 
 In this way, the effect of the SkyScript algorithm can be verified directly.
@@ -27,7 +27,7 @@ Related work is encapsulated into class CapMap.
 
 ## 1 How to running this program:
     # Before running this program, you have to 
-    Fork or download the project to lacal PC and setup environment.
+    Fork or download this project to local PC and setup environment.
 
     Open CaptionScape in vscode, and open caption_scape.py:
     
@@ -51,8 +51,9 @@ Related work is encapsulated into class CapMap.
 
 ## 2 About the input remote sensing image.
 The remote sensing map can be a general map, and the image name can be a common word or in the format of "latitude,longitude.jpg". If it is the latter, the user can modify the length values in meters corresponding to the RSI_WIDTH_METER and RSI_HEIGHT_METER parameters in the initialization program of the CapMap class. Consequently, the final output caption scape image will be drawn according to the latitude and longitude proportionality.
-The algorithm's effect is shown in the figure below. 
+The algorithm's effect is shown in the figure below.
 
+![Example Image](example_capmap/example.jpg)
 
 # 3 Detailed instructions for modifying the original program “SkyScript”.
 
