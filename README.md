@@ -155,7 +155,6 @@ The algorithm's effect is shown in the figure below.
                 lst_topk_result = [float(correct[:k].reshape(-1).float().sum(0, keepdim=True).cpu().numpy()) for k in topk]
                 return lst_topk_result, pred_top1
             "
-## 5
-Considering the extensive modifications required in Module "test_zero_shot_classification.py", 
-we can create a new file "test_zero_shot_classification_for_cap.py" specifically for the implementation of this task. We only need to modify an import sentence in "caption_scape.py". 
+## 5🌱 Add two folders
+The example_capmap folder and the your_root_dir folder have been added. The former stores example images to demonstrate the effects of CaptionScape, while the latter is used to store input images and output data related to CaptionScape.
 
